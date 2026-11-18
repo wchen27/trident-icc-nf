@@ -26,16 +26,15 @@ process TRIDENT_ICC {
     ln -s "\$PWD/${slide}" "wsi/${name}.${ext}"
 
     run() {
-        \$1 batch -- --task seg --wsi_dir wsi --job_dir \$2 --segmenter otsu --gpus -1 --max_workers 0
+        \$1 batch -- --task seg --wsi_dir wsi --job_dir \$2 --segmenter otsu --gpus -1 --max_workers 0 || return 1
         for t in ${params.min_tissue}; do
             \$1 batch -- --task coords --wsi_dir wsi --job_dir \$2 --coords_dir tiles_\$t --gpus -1 \
-                --mag 20 --patch_size 512 --overlap 0 --min_tissue_proportion \$t --max_workers 0
+                --mag 20 --patch_size 512 --overlap 0 --min_tissue_proportion \$t --max_workers 0 || return 1
         done
-        mkdir "${name}/\$2"
-        cp -r \$2/contours_geojson \$2/tiles_* "${name}/\$2/"
+        mkdir "${name}/\$2" && cp -r \$2/contours_geojson \$2/tiles_* "${name}/\$2/"
     }
-    run trident stored > "${name}/stored.log" 2>&1
-    run trident_icc.py icc > "${name}/icc.log" 2>&1
+    run trident stored > "${name}/stored.log" 2>&1 || { tail -n 40 "${name}/stored.log" >&2; exit 1; }
+    run trident_icc.py icc > "${name}/icc.log" 2>&1 || { tail -n 40 "${name}/icc.log" >&2; exit 1; }
 
     compare_slide.py "${name}" "wsi/${name}.${ext}"
     """
