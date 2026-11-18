@@ -2,7 +2,7 @@
 
 Runs TRIDENT tissue segmentation and tiling on each slide twice, once as stored and once with the slide's own ICC colour profile applied, and compares the two.
 
-- Container: `wchen27/trident-cpu:0.3.1-tiles.2` (TRIDENT v0.3.1)
+- Container: `wchen27/trident-cpu:0.3.1-tiles.3` (TRIDENT v0.3.1)
 - Settings: Otsu segmentation, then tiles at 20x, 512 px, no overlap, minimum tissue 25% and 75%
 - `bin/trident_icc.py` runs `trident` with every pixel read converted from the slide's ICC profile to sRGB. Slides without a profile are read as stored
 
