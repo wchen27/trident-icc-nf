@@ -29,13 +29,19 @@ def tiles(run, folder):
 
 stored, icc = tissue("stored"), tissue("icc")
 lost, gained = stored.difference(icc), icc.difference(stored)
+
+
+def pct(area):
+    return 100 * area / stored.area if stored.area else float("nan")
+
+
 row = {
     "name": name,
     "tissue_stored": stored.area,
     "tissue_icc": icc.area,
-    "tissue_change_pct": 100 * (icc.area - stored.area) / stored.area,
-    "tissue_lost_pct": 100 * lost.area / stored.area,
-    "tissue_gained_pct": 100 * gained.area / stored.area,
+    "tissue_change_pct": pct(icc.area - stored.area),
+    "tissue_lost_pct": pct(lost.area),
+    "tissue_gained_pct": pct(gained.area),
 }
 for folder in sorted(os.path.basename(p) for p in glob.glob("stored/tiles_*")):
     before, after = tiles("stored", folder), tiles("icc", folder)

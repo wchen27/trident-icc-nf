@@ -16,7 +16,7 @@ process TRIDENT_ICC {
 
     output:
     path "${name}.tsv", emit: tsv
-    path "${name}_mask.png"
+    path "${name}_mask.png", optional: true
     path "${name}"
 
     script:
@@ -33,10 +33,14 @@ process TRIDENT_ICC {
         done
         mkdir "${name}/\$2" && cp -r \$2/contours_geojson \$2/tiles_* "${name}/\$2/"
     }
-    run trident stored > "${name}/stored.log" 2>&1 || { tail -n 40 "${name}/stored.log" >&2; exit 1; }
-    run trident_icc.py icc > "${name}/icc.log" 2>&1 || { tail -n 40 "${name}/icc.log" >&2; exit 1; }
-
-    compare_slide.py "${name}" "wsi/${name}.${ext}"
+    step=done
+    run trident stored > "${name}/stored.log" 2>&1 || step=stored
+    if [ \$step = done ]; then run trident_icc.py icc > "${name}/icc.log" 2>&1 || step=icc; fi
+    if [ \$step = done ]; then compare_slide.py "${name}" "wsi/${name}.${ext}" > "${name}/compare.log" 2>&1 || step=compare; fi
+    if [ \$step != done ]; then
+        error=\$(grep -v -i warning "${name}/\$step.log" | tail -n 1 | tr '\\t' ' ' | sed "s|${name}|<slide>|g")
+        printf 'name\\tfailed_step\\terror\\n%s\\t%s\\t%s\\n' "${name}" "\$step" "\$error" > "${name}.tsv"
+    fi
     """
 }
 
